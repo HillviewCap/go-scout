@@ -23,7 +23,7 @@ import (
 var (
 	cameraData         = make(chan []byte)
 	controlData        string
-	ROSHostAddress     = "192.168.1.224:11311"
+	ROSHostAddress     = "10.0.10.66:11311"
 	localhostAddress   = "127.0.0.1"
 	flagWindowX        = flag.Int("windowX", 1920, "window width")
 	flagWindowY        = flag.Int("windowY", 1080, "window height")
