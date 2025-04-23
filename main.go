@@ -66,6 +66,15 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	// print some HUD data
 	controlData = fmt.Sprintf("lX: %f lY: %f rX:%f rY:%f speedModifier:%f", joystickLeftX, joystickLeftY, joystickRightX, joystickRightY, forwardSpeed)
 	ebitenutil.DebugPrint(screen, controlData)
+	
+	// Display battery status
+	chargingStatus := ""
+	if isCharging {
+		chargingStatus = "(Charging)"
+	}
+	batteryText := fmt.Sprintf("Battery: %.1f%% %s", batteryLevel * 100, chargingStatus)
+	ebitenutil.DebugPrintAt(screen, batteryText, 10, WindowY-40)
+	
 	// print bottom HUD data
 	ebitenutil.DebugPrintAt(screen, "🥷 Scout 🤖", 10, WindowY-20)
 }
@@ -103,7 +112,7 @@ func main() {
 	}
 	defer n.Close()
 
-	// create a subscriber
+	// create a subscriber for video feed
 	subby := goroslib.SubscriberConf{
 		Node:      n,
 		Topic:     "/CoreNode/jpg",
@@ -116,6 +125,17 @@ func main() {
 		panic(err)
 	}
 	defer sub.Close()
+	
+	// Subscribe to battery status
+	batterySub, err := subscribeToBatteryStatus(n)
+	if err != nil {
+		log.Println("Failed to subscribe to battery status:", err)
+	} else {
+		defer batterySub.Close()
+		if *flagVerbose {
+			log.Println("Subscribed to battery status topic")
+		}
+	}
 
 	// init robo controller
 	if *flagControlScheme == "joystick" {
@@ -250,35 +270,16 @@ func robotControl() {
 
 // robotControlKeyboard is a goroutine that will read the keyboard and publish the control data to the robot
 func robotControlKeyboard() {
+	fmt.Println("robotControlKeyboard function started - if you see this message, the function is running")
+	log.Println("robotControlKeyboard function started - log message")
 	for {
+		// Special key handling for functions that need to be called directly
 		// exit the program
 		if ebiten.IsKeyPressed(ebiten.KeyEscape) {
 			os.Exit(0)
 		}
-		// keyboard control w,s,a,d, q,e, space for screenshot, h for home, 9 for light 1, 0 for light 2
-		if ebiten.IsKeyPressed(ebiten.KeyW) {
-			joystickLeftY = 1
-		} else if ebiten.IsKeyPressed(ebiten.KeyS) {
-			joystickLeftY = -1
-		} else {
-			joystickLeftY = 0
-		}
-
-		if ebiten.IsKeyPressed(ebiten.KeyA) {
-			joystickLeftX = -1
-		} else if ebiten.IsKeyPressed(ebiten.KeyD) {
-			joystickLeftX = 1
-		} else {
-			joystickLeftX = 0
-		}
-
-		if ebiten.IsKeyPressed(ebiten.KeyQ) {
-			joystickRightX = -1
-		} else if ebiten.IsKeyPressed(ebiten.KeyE) {
-			joystickRightX = 1
-		} else {
-			joystickRightX = 0
-		}
+		
+		// Screenshot, home, lights
 
 		// add all controls from the joystiock function
 		if ebiten.IsKeyPressed(ebiten.KeyH) {
@@ -307,6 +308,9 @@ func robotControlKeyboard() {
 			}
 		}
 
+		// Print current joystick values
+		fmt.Printf("Current values - lX: %f, lY: %f, rX: %f, rY: %f\n", joystickLeftX, joystickLeftY, joystickRightX, joystickRightY)
+		
 		msg := &geometry_msgs.Twist{
 			Linear: geometry_msgs.Vector3{
 				X: joystickRightX * .2,          // strafe l r
@@ -316,6 +320,8 @@ func robotControlKeyboard() {
 				Z: joystickLeftX * -1.8, // rotate l r
 			},
 		}
+		
+		fmt.Printf("Creating message - Linear.X: %f, Linear.Y: %f, Angular.Z: %f\n", msg.Linear.X, msg.Linear.Y, msg.Angular.Z)
 
 		// create a publisher
 		pub, err = goroslib.NewPublisher(goroslib.PublisherConf{
@@ -328,6 +334,7 @@ func robotControlKeyboard() {
 			log.Fatal(err)
 		}
 		// send the message to the robot
+		log.Printf("Publishing message: Linear.X=%f, Linear.Y=%f, Angular.Z=%f", msg.Linear.X, msg.Linear.Y, msg.Angular.Z)
 		pub.Write(msg)
 		// wait a bit
 		time.Sleep(time.Millisecond * 180)
@@ -337,6 +344,47 @@ func robotControlKeyboard() {
 }
 
 func (g *Game) Update() error {
+	// Keyboard control
+	if *flagControlScheme == "keyboard" {
+		// W/S keys for forward/backward
+		if ebiten.IsKeyPressed(ebiten.KeyW) {
+			joystickLeftY = 1
+		} else if ebiten.IsKeyPressed(ebiten.KeyS) {
+			joystickLeftY = -1
+		} else {
+			joystickLeftY = 0
+		}
+
+		// A/D keys for turning left/right
+		if ebiten.IsKeyPressed(ebiten.KeyA) {
+			joystickLeftX = -1
+		} else if ebiten.IsKeyPressed(ebiten.KeyD) {
+			joystickLeftX = 1
+		} else {
+			joystickLeftX = 0
+		}
+
+		// Q/E keys for strafing left/right
+		if ebiten.IsKeyPressed(ebiten.KeyQ) {
+			joystickRightX = -1
+		} else if ebiten.IsKeyPressed(ebiten.KeyE) {
+			joystickRightX = 1
+		} else {
+			joystickRightX = 0
+		}
+
+		// Other controls
+		if ebiten.IsKeyPressed(ebiten.KeyP) {
+			if forwardSpeed < maxForwardSpeed {
+				forwardSpeed += 0.1
+			}
+		}
+		if ebiten.IsKeyPressed(ebiten.KeyO) {
+			if forwardSpeed > minForwardSpeed {
+				forwardSpeed -= 0.1
+			}
+		}
+	}
 	return nil
 }
 

@@ -120,49 +120,60 @@ To add support for additional robot features, you'll need to:
 2. **Create appropriate message or service types** in Go.
 3. **Subscribe to topics or create service clients** to interact with the robot.
 
-### Example: Adding Battery Status
+### Example: Adding Battery Status (Implemented)
 
-To add battery status monitoring, you would:
+Battery status monitoring has been implemented in the project. Here's how it was done:
 
-1. Identify the ROS topic that provides battery information (e.g., `/CoreNode/battery_status`).
-2. Create a message type for battery status:
+1. Identified the ROS topic that provides battery information (`/CoreNode/battery_status`).
+2. Created a message type for battery status in `battery.go`:
 
 ```go
 type BatteryStatus struct {
     msg.Package `ros:"roller_eye"`
-    Level       float32
-    Charging    bool
+    Level       float32 `ros:"level float32"`
+    Charging    bool    `ros:"charging bool"`
 }
 ```
 
-3. Subscribe to the topic:
+3. Created global variables to store the battery status:
 
 ```go
-batteryStatus := goroslib.SubscriberConf{
-    Node:      n,
-    Topic:     "/CoreNode/battery_status",
-    Callback:  onBatteryStatus,
-    QueueSize: 0,
-}
-
-sub, err := goroslib.NewSubscriber(batteryStatus)
-if err != nil {
-    panic(err)
-}
-defer sub.Close()
+var (
+    batteryLevel float32 = 0.0
+    isCharging   bool    = false
+)
 ```
 
-4. Create a callback function:
+4. Implemented a function to subscribe to the battery status topic:
+
+```go
+func subscribeToBatteryStatus(n *goroslib.Node) (*goroslib.Subscriber, error) {
+    batteryStatusConf := goroslib.SubscriberConf{
+        Node:      n,
+        Topic:     "/CoreNode/battery_status",
+        Callback:  onBatteryStatus,
+        QueueSize: 0,
+    }
+
+    sub, err := goroslib.NewSubscriber(batteryStatusConf)
+    if err != nil {
+        return nil, err
+    }
+
+    return sub, nil
+}
+```
+
+5. Created a callback function to process battery status messages:
 
 ```go
 func onBatteryStatus(msg *BatteryStatus) {
-    // Update the HUD with battery information
     batteryLevel = msg.Level
     isCharging = msg.Charging
 }
 ```
 
-5. Update the HUD to display the battery information:
+6. Updated the HUD in the `Draw()` function to display the battery information:
 
 ```go
 func (g *Game) Draw(screen *ebiten.Image) {
@@ -173,6 +184,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
     ebitenutil.DebugPrintAt(screen, batteryText, 10, WindowY-40)
 }
 ```
+
+This implementation allows the application to display the robot's current battery level and charging status in the HUD.
 
 ## Debugging ROS Communication
 

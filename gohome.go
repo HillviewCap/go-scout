@@ -25,6 +25,7 @@ func scoutGoHome() {
 	n, err := goroslib.NewNode(goroslib.NodeConf{
 		Name:          "scout-go-home",
 		MasterAddress: *flagROSHostAddress,
+		Host:          *flaglocalhost,
 	})
 	if err != nil {
 		panic(err)

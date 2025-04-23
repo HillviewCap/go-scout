@@ -74,7 +74,10 @@ Developers looking to contribute can extend the project by:
 - Implementing items from the existing "To-Do" list in the `README.md`:
   - Add support for other controllers.
   - Create a proper Heads-Up-Display (HUD).
-  - Add support for more features of the robot (battery status, compass, sensor data to HUD).
+  - Add support for more features of the robot:
+    - ✅ Battery status (implemented in `battery.go` and displayed in the HUD)
+    - Compass
+    - Sensor data to HUD
 - Adding new control mappings or robot interactions.
 - Improving the GUI or video feed processing.
 

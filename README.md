@@ -135,6 +135,6 @@ For developers interested in contributing to the project, please refer to the fo
 - Add support for other controllers
 - Create a proper Heads-Up-Display
 - Add support for more features of the robot
-  - Add battery status to HUD
+  - ✅ Add battery status to HUD
   - Add compass to HUD
   - Add sensor data to HUD

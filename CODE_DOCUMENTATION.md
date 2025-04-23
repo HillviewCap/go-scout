@@ -211,12 +211,20 @@ To add support for more robot features:
 - Create appropriate service client structures and functions.
 - Add user interface elements to trigger these features.
 
-For example, to add battery status to the HUD:
+For example, to add battery status to the HUD (which has been implemented):
 
-1. Find the ROS topic that provides battery information.
-2. Subscribe to this topic in the main function.
-3. Create a callback function to process battery status messages.
-4. Update the HUD display to show the battery status.
+1. Find the ROS topic that provides battery information (`/CoreNode/battery_status`).
+2. Define a message type for battery status in `battery.go`:
+   ```go
+   type BatteryStatus struct {
+       msg.Package `ros:"roller_eye"`
+       Level       float32 `ros:"level float32"`
+       Charging    bool    `ros:"charging bool"`
+   }
+   ```
+3. Subscribe to this topic in the main function using the `subscribeToBatteryStatus` function.
+4. Create a callback function (`onBatteryStatus`) to process battery status messages and update global variables.
+5. Update the HUD display in the `Draw()` function to show the battery status.
 
 ## Debugging Tips
 

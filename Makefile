@@ -9,7 +9,7 @@ BUILD_DIR=./build
 MAIN_FILE=main.go
 
 # Default robot IP and port
-ROBOT_IP=192.168.1.224
+ROBOT_IP=10.0.10.66
 ROBOT_PORT=11311
 
 # Default window size
