@@ -142,7 +142,7 @@ echo
 echo -e "${BOLD}Checking network connectivity:${RESET}"
 print_info "Enter the IP address of your Moorebot Scout robot (default: 192.168.1.224):"
 read ROBOT_IP
-ROBOT_IP=${ROBOT_IP:-192.168.1.224}
+ROBOT_IP=${ROBOT_IP:-10.0.10.66}
 
 print_info "Checking connectivity to $ROBOT_IP..."
 if ping -c 1 -W 2 $ROBOT_IP >/dev/null 2>&1; then
